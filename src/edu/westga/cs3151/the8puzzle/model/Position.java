@@ -107,7 +107,17 @@ public class Position {
 	 */
 	@Override
 	public boolean equals(Object pos) {
-		return false;
+		Position specifiedPosition = (Position) pos;
+		
+		if (specifiedPosition == null) {
+			return false;
+		}
+		
+		int spRow = specifiedPosition.row;
+		int spColumn = specifiedPosition.col;
+		boolean equals = this.row == spRow && this.col == spColumn;
+		
+		return equals;
 	}
 
 	@Override
