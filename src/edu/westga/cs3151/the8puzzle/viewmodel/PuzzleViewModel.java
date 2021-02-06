@@ -26,7 +26,7 @@ public class PuzzleViewModel {
 	private final BooleanProperty solvedBoardProperty;
 
 	private Board board;
-	
+
 	private Stack<Board> boardStack;
 
 	/**
@@ -79,7 +79,12 @@ public class PuzzleViewModel {
 	 * @param pos the position of the tile to be moved
 	 */
 	public void moveTile(Position pos) {
+		if (pos == null) {
+			return;
+		}
+
 		Position destinationPos = this.board.getEmptyTilePosition();
+
 		if (this.boardStack.size() == 0) {
 			this.boardStack.add(new Board(this.board));
 		}
@@ -91,7 +96,7 @@ public class PuzzleViewModel {
 			Board newBoard = new Board(this.board);
 			this.boardStack.add(newBoard);
 			this.setTilesForView();
-			
+
 			if (this.board.isSorted()) {
 				this.solvedBoardProperty.set(true);
 			}
@@ -153,13 +158,13 @@ public class PuzzleViewModel {
 	public void newPuzzle() {
 		this.board.shuffle();
 		this.boardStack.clear();
-		
+
 		this.setTilesForView();
 	}
 
 	/**
-	 * One-by-one removes the Move objects from the specified queue
-	 * and applies each move on this board.   
+	 * One-by-one removes the Move objects from the specified queue and applies each
+	 * move on this board.
 	 * 
 	 * @param moves a sequence of valid moves
 	 */
@@ -181,8 +186,8 @@ public class PuzzleViewModel {
 	}
 
 	/**
-	 * Needs to be called whenever the tiles of this.board have changed to
-	 * display the updated board in the view
+	 * Needs to be called whenever the tiles of this.board have changed to display
+	 * the updated board in the view
 	 */
 	private void setTilesForView() {
 		for (Position pos : Position.values()) {
