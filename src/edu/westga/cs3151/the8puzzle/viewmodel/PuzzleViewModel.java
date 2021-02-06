@@ -81,13 +81,17 @@ public class PuzzleViewModel {
 	public void moveTile(Position pos) {
 		Position destinationPos = this.board.getEmptyTilePosition();
 		if (this.boardStack.size() == 0) {
-			Board defaultBoard = new Board(this.board);
-			this.boardStack.add(defaultBoard);
+			this.boardStack.add(new Board(this.board));
+		}
+		if (this.boardStack.size() == 1) {
+			this.boardStack.clear();
+			this.boardStack.add(new Board(this.board));
 		}
 		if (this.board.moveTile(pos, destinationPos)) {
 			Board newBoard = new Board(this.board);
 			this.boardStack.add(newBoard);
 			this.setTilesForView();
+			
 			if (this.board.isSorted()) {
 				this.solvedBoardProperty.set(true);
 			}
@@ -102,6 +106,9 @@ public class PuzzleViewModel {
 	 */
 	public void undo() {
 		System.out.println("Replace me by instructions to undo the most recent move");
+		if (this.boardStack.size() == 1) {
+			return;
+		}
 		if (this.boardStack.size() > 1) {
 			this.boardStack.pop();
 			this.board = this.boardStack.lastElement();
@@ -144,9 +151,8 @@ public class PuzzleViewModel {
 	 * @post the application is reset for a new random puzzle
 	 */
 	public void newPuzzle() {
-		this.boardStack.clear();
 		this.board.shuffle();
-		this.boardStack.add(this.board);
+		this.boardStack.clear();
 		
 		this.setTilesForView();
 	}
