@@ -2,6 +2,7 @@ package edu.westga.cs3151.the8puzzle.model;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 
 /**
@@ -172,9 +173,27 @@ public class Board {
 		if (dest == null) {
 			throw new IllegalArgumentException("destination position cannot be null");
 		}
+
+		if (this.checkIfNeighborIsEmptyTile(src, dest)) {
 		this.setTile(dest, this.getTile(src));
 		this.setTile(src, 0);
 		return true;
+		}
+		return false;
+	}
+
+	private boolean checkIfNeighborIsEmptyTile(Position src, Position dest) {
+		boolean hasEmptyAsNeighbor = false;
+
+		Collection<Position> destNeighbors = dest.getNeighbors();
+
+		for (Position currentNeighbor : destNeighbors) {
+			if (currentNeighbor.equals(src)) {
+				return true;
+			}
+		}
+
+		return hasEmptyAsNeighbor;
 	}
 
 	/**
