@@ -39,7 +39,6 @@ public class PuzzleViewModel {
 		this.board = new Board();
 		this.boardStack = new Stack<Board>();
 		this.board.shuffle();
-		this.boardStack.add(this.board);
 		this.tileNumberProperty = new StringProperty[Position.MAX_ROWS][Position.MAX_COLS];
 		for (Position pos : Position.values()) {
 			this.tileNumberProperty[pos.getRow()][pos.getCol()] = new SimpleStringProperty();
@@ -81,11 +80,14 @@ public class PuzzleViewModel {
 	 */
 	public void moveTile(Position pos) {
 		Position destinationPos = this.board.getEmptyTilePosition();
+		if (this.boardStack.size() == 0) {
+			Board defaultBoard = new Board(this.board);
+			this.boardStack.add(defaultBoard);
+		}
 		if (this.board.moveTile(pos, destinationPos)) {
+			Board newBoard = new Board(this.board);
+			this.boardStack.add(newBoard);
 			this.setTilesForView();
-			//code to be tested underneath v
-			Board currentBoard = new Board(this.board);
-			this.boardStack.add(currentBoard);
 			if (this.board.isSorted()) {
 				this.solvedBoardProperty.set(true);
 			}
@@ -100,15 +102,11 @@ public class PuzzleViewModel {
 	 */
 	public void undo() {
 		System.out.println("Replace me by instructions to undo the most recent move");
-		if (this.boardStack.size() == 1) {
-			return;
+		if (this.boardStack.size() > 1) {
+			this.boardStack.pop();
+			this.board = this.boardStack.lastElement();
+			this.setTilesForView();
 		}
-		this.boardStack.pop();
-		Board previousBoard = this.boardStack.lastElement();
-		this.board = previousBoard;
-		
-		this.setTilesForView();
-		
 	}
 
 	/**
