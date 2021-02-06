@@ -1,6 +1,7 @@
 package edu.westga.cs3151.the8puzzle.viewmodel;
 
 import java.util.Queue;
+import java.util.Stack;
 
 import edu.westga.cs3151.the8puzzle.model.Board;
 import edu.westga.cs3151.the8puzzle.model.Move;
@@ -25,6 +26,8 @@ public class PuzzleViewModel {
 	private final BooleanProperty solvedBoardProperty;
 
 	private Board board;
+	
+	private Stack<Board> boardStack;
 
 	/**
 	 * Instantiates a new student info view model.
@@ -34,7 +37,9 @@ public class PuzzleViewModel {
 	 */
 	public PuzzleViewModel() {
 		this.board = new Board();
+		this.boardStack = new Stack<Board>();
 		this.board.shuffle();
+		this.boardStack.add(this.board);
 		this.tileNumberProperty = new StringProperty[Position.MAX_ROWS][Position.MAX_COLS];
 		for (Position pos : Position.values()) {
 			this.tileNumberProperty[pos.getRow()][pos.getCol()] = new SimpleStringProperty();
@@ -78,6 +83,9 @@ public class PuzzleViewModel {
 		Position destinationPos = this.board.getEmptyTilePosition();
 		if (this.board.moveTile(pos, destinationPos)) {
 			this.setTilesForView();
+			//code to be tested underneath v
+			Board currentBoard = new Board(this.board);
+			this.boardStack.add(currentBoard);
 			if (this.board.isSorted()) {
 				this.solvedBoardProperty.set(true);
 			}
@@ -92,6 +100,15 @@ public class PuzzleViewModel {
 	 */
 	public void undo() {
 		System.out.println("Replace me by instructions to undo the most recent move");
+		if (this.boardStack.size() == 1) {
+			return;
+		}
+		this.boardStack.pop();
+		Board previousBoard = this.boardStack.lastElement();
+		this.board = previousBoard;
+		
+		this.setTilesForView();
+		
 	}
 
 	/**
@@ -129,7 +146,10 @@ public class PuzzleViewModel {
 	 * @post the application is reset for a new random puzzle
 	 */
 	public void newPuzzle() {
+		this.boardStack.clear();
 		this.board.shuffle();
+		this.boardStack.add(this.board);
+		
 		this.setTilesForView();
 	}
 
