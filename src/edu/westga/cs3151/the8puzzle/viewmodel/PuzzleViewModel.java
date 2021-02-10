@@ -1,5 +1,8 @@
 package edu.westga.cs3151.the8puzzle.viewmodel;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.LinkedList;
 import java.util.Queue;
 import java.util.Stack;
 
@@ -134,6 +137,45 @@ public class PuzzleViewModel {
 	 */
 	public void help() {
 		System.out.println("Replace me by instructions to set the next tile at the correct position.");
+		int numberCorrectPositions = this.board.getNumberSortedTiles();
+		int nextNumberToSolve = numberCorrectPositions + 1;
+		
+		while (numberCorrectPositions != nextNumberToSolve) {
+			Queue<Move> moves = new LinkedList<Move>();
+			Position blankPosition = this.board.getEmptyTilePosition();
+			Collection<Position> blankPositionNeighbors = blankPosition.getNeighbors();
+			ArrayList<Position> unmoveablePositions = this.getUnmoveablePositions(numberCorrectPositions, blankPosition);
+			
+			for	(Position currentPosition : blankPositionNeighbors){
+				if (this.checkIfPositionIsMoveable(unmoveablePositions, currentPosition)) {
+					Move move = new Move(currentPosition, blankPosition);
+				}	
+			}
+		}
+		
+		System.out.println("Correct positions: " + numberCorrectPositions);
+	}
+	
+	private ArrayList<Position> getUnmoveablePositions(int staticPositions, Position position){
+		ArrayList<Position> currentPositions = (ArrayList<Position>) position.values();
+		for (int i = 0; i < staticPositions; i++) {
+			currentPositions.remove(i);
+		}
+		ArrayList<Position> unmoveablePositions = new ArrayList<Position>(currentPositions);
+		
+		return unmoveablePositions;
+	}
+	
+	private boolean checkIfPositionIsMoveable(ArrayList<Position> unmoveablePositions, Position position) {
+		boolean isMoveable = true;
+		
+		for (Position currentPosition : unmoveablePositions) {
+			if (position.getRow() == currentPosition.getRow() && position.getCol() == currentPosition.getCol()) {
+				isMoveable = false;
+			}
+		}
+		
+		return isMoveable;
 	}
 
 	/**
@@ -193,6 +235,18 @@ public class PuzzleViewModel {
 		for (Position pos : Position.values()) {
 			String tileNumber = Integer.toString(this.board.getTile(pos));
 			this.tileNumberProperty[pos.getRow()][pos.getCol()].set(tileNumber);
+		}
+	}
+	
+	private final class Node {
+		private Move value;
+		private Node next;
+		private Node previous;
+
+		private Node(Move move) {
+			this.value = move;
+			this.next = null;
+			this.previous = null;
 		}
 	}
 }
