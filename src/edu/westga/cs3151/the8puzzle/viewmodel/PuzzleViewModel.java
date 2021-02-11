@@ -30,7 +30,7 @@ public class PuzzleViewModel {
 
 	private Board board;
 
-	private Stack<Board> boardStack;
+	private Stack<Board> undoBoardStack;
 
 	/**
 	 * Instantiates a new student info view model.
@@ -40,7 +40,7 @@ public class PuzzleViewModel {
 	 */
 	public PuzzleViewModel() {
 		this.board = new Board();
-		this.boardStack = new Stack<Board>();
+		this.undoBoardStack = new Stack<Board>();
 		this.board.shuffle();
 		this.tileNumberProperty = new StringProperty[Position.MAX_ROWS][Position.MAX_COLS];
 		for (Position pos : Position.values()) {
@@ -88,16 +88,16 @@ public class PuzzleViewModel {
 
 		Position destinationPos = this.board.getEmptyTilePosition();
 
-		if (this.boardStack.size() == 0) {
-			this.boardStack.add(new Board(this.board));
+		if (this.undoBoardStack.size() == 0) {
+			this.undoBoardStack.add(new Board(this.board));
 		}
-		if (this.boardStack.size() == 1) {
-			this.boardStack.clear();
-			this.boardStack.add(new Board(this.board));
+		if (this.undoBoardStack.size() == 1) {
+			this.undoBoardStack.clear();
+			this.undoBoardStack.add(new Board(this.board));
 		}
 		if (this.board.moveTile(pos, destinationPos)) {
 			Board newBoard = new Board(this.board);
-			this.boardStack.add(newBoard);
+			this.undoBoardStack.add(newBoard);
 			this.setTilesForView();
 
 			if (this.board.isSorted()) {
@@ -114,12 +114,12 @@ public class PuzzleViewModel {
 	 */
 	public void undo() {
 		System.out.println("Replace me by instructions to undo the most recent move");
-		if (this.boardStack.size() == 1) {
+		if (this.undoBoardStack.size() == 1) {
 			return;
 		}
-		if (this.boardStack.size() > 1) {
-			this.boardStack.pop();
-			this.board = this.boardStack.lastElement();
+		if (this.undoBoardStack.size() > 1) {
+			this.undoBoardStack.pop();
+			this.board = this.undoBoardStack.lastElement();
 			this.setTilesForView();
 		}
 	}
@@ -137,44 +137,68 @@ public class PuzzleViewModel {
 	 */
 	public void help() {
 		System.out.println("Replace me by instructions to set the next tile at the correct position.");
+
 		int numberCorrectPositions = this.board.getNumberSortedTiles();
 		int nextNumberToSolve = numberCorrectPositions + 1;
+
+		Queue<Move> correctMoves = new LinkedList<Move>();
+		Queue<Node> moves = new LinkedList<Node>();
 		
-		while (numberCorrectPositions != nextNumberToSolve) {
-			Queue<Move> moves = new LinkedList<Move>();
-			Position blankPosition = this.board.getEmptyTilePosition();
-			Collection<Position> blankPositionNeighbors = blankPosition.getNeighbors();
-			ArrayList<Position> unmoveablePositions = this.getUnmoveablePositions(numberCorrectPositions, blankPosition);
+		Node sourceNode = new Node(new Board(this.board));
+		moves.add(sourceNode);
+		
+		while (!moves.isEmpty()) {
+			Node currentNode = moves.remove();
+			Position emptyTilePosition = currentNode.value.getEmptyTilePosition();
+			ArrayList<Position> emptyTileNeighbors = (ArrayList<Position>) emptyTilePosition.getNeighbors();
 			
-			for	(Position currentPosition : blankPositionNeighbors){
-				if (this.checkIfPositionIsMoveable(unmoveablePositions, currentPosition)) {
-					Move move = new Move(currentPosition, blankPosition);
-				}	
+			for (Position currentPosition : emptyTileNeighbors) {
+				
+				Board alteredBoard = new Board(currentNode.value);
+				alteredBoard.moveTile(currentPosition, emptyTilePosition);
+				
+				Node neighborNode = new Node(alteredBoard);
+				neighborNode.previous = currentNode;
+				
+				moves.add(neighborNode);	
 			}
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
 		}
 		
-		System.out.println("Correct positions: " + numberCorrectPositions);
+		
+		
+		
 	}
-	
-	private ArrayList<Position> getUnmoveablePositions(int staticPositions, Position position){
-		ArrayList<Position> currentPositions = (ArrayList<Position>) position.values();
+
+	private ArrayList<Position> getUnmoveablePositions(int staticPositions, Position position) {
+		ArrayList<Position> currentPositions = (ArrayList<Position>) Position.values();
 		for (int i = 0; i < staticPositions; i++) {
 			currentPositions.remove(i);
 		}
 		ArrayList<Position> unmoveablePositions = new ArrayList<Position>(currentPositions);
-		
+
 		return unmoveablePositions;
 	}
-	
+
 	private boolean checkIfPositionIsMoveable(ArrayList<Position> unmoveablePositions, Position position) {
 		boolean isMoveable = true;
-		
+
 		for (Position currentPosition : unmoveablePositions) {
-			if (position.getRow() == currentPosition.getRow() && position.getCol() == currentPosition.getCol()) {
+			if (position.getRow() == currentPosition.getRow() && 
+					position.getCol() == currentPosition.getCol()) {
 				isMoveable = false;
 			}
 		}
-		
+
 		return isMoveable;
 	}
 
@@ -199,7 +223,7 @@ public class PuzzleViewModel {
 	 */
 	public void newPuzzle() {
 		this.board.shuffle();
-		this.boardStack.clear();
+		this.undoBoardStack.clear();
 
 		this.setTilesForView();
 	}
@@ -237,16 +261,18 @@ public class PuzzleViewModel {
 			this.tileNumberProperty[pos.getRow()][pos.getCol()].set(tileNumber);
 		}
 	}
-	
+
 	private final class Node {
-		private Move value;
+		private Board value;
 		private Node next;
 		private Node previous;
+		private boolean visited;
 
-		private Node(Move move) {
-			this.value = move;
+		private Node(Board board) {
+			this.value = board;
 			this.next = null;
 			this.previous = null;
+			this.visited = false;
 		}
 	}
 }
