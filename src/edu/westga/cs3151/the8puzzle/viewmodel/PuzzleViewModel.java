@@ -143,57 +143,40 @@ public class PuzzleViewModel {
 
 		Queue<Move> correctMoves = new LinkedList<Move>();
 		Queue<Node> moves = new LinkedList<Node>();
-		
+
 		Board sourceBoard = new Board(this.board);
 		Node sourceNode = new Node(sourceBoard);
+		sourceNode.previous = new Node(sourceBoard);
 		moves.add(sourceNode);
-		
+
 		while (!moves.isEmpty()) {
 			Node currentNode = moves.remove();
 			Position emptyTilePosition = currentNode.value.getEmptyTilePosition();
+			// new ArrayList of neighbors - prevous board
 			ArrayList<Position> emptyTileNeighbors = (ArrayList<Position>) emptyTilePosition.getNeighbors();
 			
 			for (Position currentPosition : emptyTileNeighbors) {
 				
 				Board alteredBoard = new Board(currentNode.value);
 				alteredBoard.moveTile(currentPosition, emptyTilePosition);
-				
 				Node neighborNode = new Node(alteredBoard);
 				neighborNode.previous = currentNode;
-				
-				moves.add(neighborNode);	
-				
+
+				// check if tiles blankspot is in the space spot as previous board. Check if
+				// correct tiles are less than
+				// previous board
+				if (!(currentNode.previous.value.getEmptyTilePosition().equals(alteredBoard.getEmptyTilePosition()))) {
+					moves.add(neighborNode);
+				}
+
 				if (neighborNode.value.getNumberSortedTiles() == nextNumberToSolve) {
-					//use neighborNode to execute final method to return queue of moves
+					// use neighborNode to execute final method to return queue of moves
 					this.board = neighborNode.value;
 					moves.clear();
 					this.setTilesForView();
 				}
-			}	
-		}
-	}
-	
-	private ArrayList<Position> getUnmoveablePositions(int staticPositions, Position position) {
-		ArrayList<Position> currentPositions = (ArrayList<Position>) Position.values();
-		for (int i = 0; i < staticPositions; i++) {
-			currentPositions.remove(i);
-		}
-		ArrayList<Position> unmoveablePositions = new ArrayList<Position>(currentPositions);
-
-		return unmoveablePositions;
-	}
-
-	private boolean checkIfPositionIsMoveable(ArrayList<Position> unmoveablePositions, Position position) {
-		boolean isMoveable = true;
-
-		for (Position currentPosition : unmoveablePositions) {
-			if (position.getRow() == currentPosition.getRow() && 
-					position.getCol() == currentPosition.getCol()) {
-				isMoveable = false;
 			}
 		}
-
-		return isMoveable;
 	}
 
 	/**
