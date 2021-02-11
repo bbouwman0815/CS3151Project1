@@ -144,7 +144,8 @@ public class PuzzleViewModel {
 		Queue<Move> correctMoves = new LinkedList<Move>();
 		Queue<Node> moves = new LinkedList<Node>();
 		
-		Node sourceNode = new Node(new Board(this.board));
+		Board sourceBoard = new Board(this.board);
+		Node sourceNode = new Node(sourceBoard);
 		moves.add(sourceNode);
 		
 		while (!moves.isEmpty()) {
@@ -161,24 +162,17 @@ public class PuzzleViewModel {
 				neighborNode.previous = currentNode;
 				
 				moves.add(neighborNode);	
-			}
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
+				
+				if (neighborNode.value.getNumberSortedTiles() == nextNumberToSolve) {
+					//use neighborNode to execute final method to return queue of moves
+					this.board = neighborNode.value;
+					moves.clear();
+					this.setTilesForView();
+				}
+			}	
 		}
-		
-		
-		
-		
 	}
-
+	
 	private ArrayList<Position> getUnmoveablePositions(int staticPositions, Position position) {
 		ArrayList<Position> currentPositions = (ArrayList<Position>) Position.values();
 		for (int i = 0; i < staticPositions; i++) {
