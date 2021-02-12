@@ -9,6 +9,7 @@ import java.util.Stack;
 import edu.westga.cs3151.the8puzzle.model.Board;
 import edu.westga.cs3151.the8puzzle.model.Move;
 import edu.westga.cs3151.the8puzzle.model.Position;
+import edu.westga.cs3151.the8puzzle.model.PuzzleSolver;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.beans.property.BooleanProperty;
@@ -29,8 +30,8 @@ public class PuzzleViewModel {
 	private final BooleanProperty solvedBoardProperty;
 
 	private Board board;
-
 	private Stack<Move> undoMoveStack;
+	private PuzzleSolver puzzleSolver;
 
 	/**
 	 * Instantiates a new student info view model.
@@ -120,66 +121,9 @@ public class PuzzleViewModel {
 	 * @post the next tile that is moved to its correct position
 	 */
 	public void help() {
-		int numberCorrectPositions = this.board.getNumberSortedTiles();
-		int nextNumberToSolve = numberCorrectPositions + 1;
-
-		Queue<Move> correctMoves = new LinkedList<Move>();
-		Queue<Node> moves = new LinkedList<Node>();
-		ArrayList<Node> visitedBoards = new ArrayList<Node>();
-
-		Board sourceBoard = new Board(this.board);
-		Node sourceNode = new Node(sourceBoard);
-		visitedBoards.add(sourceNode);
-		moves.add(sourceNode);
-		
-		ArrayList<Board> sourceBoardNeighbors = new ArrayList<Board>();
-		
-		for (Board currentBoard : sourceBoardNeighbors) {
-			Node neighborNode = new Node(currentBoard);
-			neighborNode.previous = sourceNode;
-			moves.add(neighborNode);
-			visitedBoards.add(neighborNode);
-			
-		}
-
-		while (!moves.isEmpty()) {
-			Node currentNode = moves.remove();
-
-			ArrayList<Board> neighborBoards = (ArrayList<Board>) currentNode.getNodeNeighbors();
-
-			for (Board currentBoard : neighborBoards) {
-
-				Node neighborNode = new Node(currentBoard);
-				neighborNode.previous = currentNode;
-
-				if (!visitedBoards.contains(neighborNode)) {
-					moves.add(neighborNode);
-					System.out.println(neighborNode.hashCode());
-				}	
-				visitedBoards.add(currentNode);
-			}
-			
-			if (currentNode.value.getNumberSortedTiles() == nextNumberToSolve) {
-				this.board = currentNode.value;
-				this.setTilesForView();
-			}
-		}
-	}
-
-	// Look into using a different queue so can just manipulate easier
-	private Queue<Move> reverseMoves(Queue<Move> moves) {
-		Stack<Move> reverseStack = new Stack<Move>();
-		Queue<Move> reverseQueue = new LinkedList<Move>();
-		while (!moves.isEmpty()) {
-			reverseStack.add(moves.remove());
-		}
-
-		while (!reverseStack.isEmpty()) {
-			reverseQueue.add(reverseStack.pop());
-		}
-
-		return reverseQueue;
-
+		this.puzzleSolver = new PuzzleSolver(this.board);
+		this.puzzleSolver.help(this.board.getNumberSortedTiles() + 1);
+		this.traceMoves(this.puzzleSolver.getCorrectMoves());
 	}
 
 	/**
@@ -241,48 +185,5 @@ public class PuzzleViewModel {
 			this.tileNumberProperty[pos.getRow()][pos.getCol()].set(tileNumber);
 		}
 	}
-
-	private final class Node {
-		private Board value;
-		private Node previous;
-
-		private Node(Board board) {
-			this.value = board;
-			this.previous = null;
-		}
-
-		public Board getValue() {
-			return this.value;
-		}
-
-		@Override
-		public boolean equals(Object obj) {
-			if (Node.this.value.hashCode() == ((Node) obj).getValue().hashCode()) {
-				return true;
-			}
-			return false;
-		}
-		
-		@Override
-		public int hashCode() {
-			return this.value.hashCode();
-		}
-
-		public Collection<Board> getNodeNeighbors() {
-			Collection<Position> neighbors = this.value.getEmptyTilePosition().getNeighbors();
-			ArrayList<Move> moves = new ArrayList<Move>();
-			for (Position currentPosition : neighbors) {
-				moves.add(new Move(currentPosition, this.value.getEmptyTilePosition()));
-			}
-
-			Collection<Board> neighborBoards = new ArrayList<Board>();
-			for (Move currentMove : moves) {
-				Board newBoard = new Board(this.value);
-				newBoard.moveTile(currentMove);
-				neighborBoards.add(newBoard);
-			}
-
-			return neighborBoards;
-		}
-	}
 }
+

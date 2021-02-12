@@ -39,11 +39,10 @@ public class Move {
 	}
 	@Override
 	public int hashCode() {
-		String hash = "";
-		hash += this.source.getCol() + this.source.getRow() + this.destination.getCol()
+		String hash = "" + this.source.getCol() + this.source.getRow() + this.destination.getCol()
 				+ this.destination.getRow();
-		int hashCode = Integer.parseInt(hash);
-		return hashCode;
+		int Code = Integer.parseInt(hash);
+		return Code;
 	}
 	
 	/**
