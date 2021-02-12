@@ -213,6 +213,24 @@ public class Board {
 
 		return this.moveTile(move.getSource(), move.getDestination());
 	}
+	
+	@Override
+	public boolean equals(Object object) {
+		return this.hashCode() == object.hashCode();
+	}
+	
+	@Override
+	public int hashCode() {
+		String code = "";
+		for (int x = 0; x < 3; x++) {
+			for (int y = 0; y < 3; y++) {
+				code = code + this.getTile(new Position(x, y));
+			}
+
+		}
+		int newCode = Integer.parseInt(code);
+		return newCode;
+	}
 
 	/**
 	 * Counts the number inversions of values greater 0 in the array list

@@ -136,17 +136,17 @@ public class PuzzleViewModel {
 	 * @post the next tile that is moved to its correct position
 	 */
 	public void help() {
-		System.out.println("Replace me by instructions to set the next tile at the correct position.");
-
 		int numberCorrectPositions = this.board.getNumberSortedTiles();
 		int nextNumberToSolve = numberCorrectPositions + 1;
 
 		Queue<Move> correctMoves = new LinkedList<Move>();
 		Queue<Node> moves = new LinkedList<Node>();
+		ArrayList<Board> visitedBoards = new ArrayList<Board>();
 
 		Board sourceBoard = new Board(this.board);
 		Node sourceNode = new Node(sourceBoard);
 		sourceNode.previous = new Node(sourceBoard);
+		visitedBoards.add(sourceBoard);
 		moves.add(sourceNode);
 
 		while (!moves.isEmpty()) {
@@ -161,13 +161,14 @@ public class PuzzleViewModel {
 				alteredBoard.moveTile(currentPosition, emptyTilePosition);
 				Node neighborNode = new Node(alteredBoard);
 				neighborNode.previous = currentNode;
-				neighborNode.hasPrevious = true;
 
 				// check if tiles blankspot is in the space spot as previous board. Check if
 				// correct tiles are less than
 				// previous board
-				if (!(currentNode.previous.value.getEmptyTilePosition().equals(alteredBoard.getEmptyTilePosition()))) {
+				if (!visitedBoards.contains(neighborNode.value)) {
+					visitedBoards.add(currentNode.value);
 					moves.add(neighborNode);
+					System.out.println(neighborNode.hashCode());
 				}
 
 				if (neighborNode.value.getNumberSortedTiles() == nextNumberToSolve) {
@@ -176,7 +177,7 @@ public class PuzzleViewModel {
 					
 					Node testNode = new Node(neighborNode.value);
 					
-					while (testNode.hasPrevious) {
+					while (testNode.previous != null) {
 						
 						Move move = new Move(testNode.value.getEmptyTilePosition(),testNode.previous.value.getEmptyTilePosition());
 						correctMoves.add(move);
@@ -186,10 +187,8 @@ public class PuzzleViewModel {
 					
 					moves.clear();
 					
-					this.traceMoves(this.reverseMoves(correctMoves));
-				}
-				
-				
+					//this.traceMoves(this.reverseMoves(correctMoves));
+				}	
 			}
 		}
 	}
@@ -272,15 +271,40 @@ public class PuzzleViewModel {
 
 	private final class Node {
 		private Board value;
-		private Node next;
 		private Node previous;
-		private boolean hasPrevious;
 
 		private Node(Board board) {
 			this.value = board;
-			this.next = null;
 			this.previous = null;
-			this.hasPrevious = false;
+		}
+		
+		public Board getValue() {
+			return this.value;
+		}
+		
+		@Override
+		public boolean equals(Object obj) {
+			if (Node.this.value.hashCode() == ((Node) obj).getValue().hashCode()){
+				return true;
+			}
+			return false;
+		}
+		
+		public Collection<Board> getNodeNeighbors() {
+			Collection<Position> neighbors = this.value.getEmptyTilePosition().getNeighbors();
+			ArrayList<Move> moves = new ArrayList<Move>();
+			for (Position currentPosition : neighbors) {
+				moves.add(new Move(currentPosition, this.value.getEmptyTilePosition()));
+			}
+			
+			Collection<Board> neighborBoards = new ArrayList<Board>();
+			for (Move currentMove : moves) {
+				Board newBoard = new Board(this.value);
+				newBoard.moveTile(currentMove);
+				neighborBoards.add(newBoard);
+			}
+			
+			return neighborBoards;
 		}
 	}
 }
