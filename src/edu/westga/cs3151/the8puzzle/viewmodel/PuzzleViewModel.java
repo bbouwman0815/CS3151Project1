@@ -194,6 +194,7 @@ public class PuzzleViewModel {
 		}
 	}
 	
+	//Look into using a different queue so can just manipulate easier
 	private Queue<Move> reverseMoves(Queue<Move> moves){
 		Stack<Move> reverseStack = new Stack<Move>();
 		Queue<Move> reverseQueue = new LinkedList<Move>();
