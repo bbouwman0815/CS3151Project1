@@ -161,6 +161,7 @@ public class PuzzleViewModel {
 				alteredBoard.moveTile(currentPosition, emptyTilePosition);
 				Node neighborNode = new Node(alteredBoard);
 				neighborNode.previous = currentNode;
+				neighborNode.hasPrevious = true;
 
 				// check if tiles blankspot is in the space spot as previous board. Check if
 				// correct tiles are less than
@@ -172,11 +173,40 @@ public class PuzzleViewModel {
 				if (neighborNode.value.getNumberSortedTiles() == nextNumberToSolve) {
 					// use neighborNode to execute final method to return queue of moves
 					this.board = neighborNode.value;
+					
+					Node testNode = new Node(neighborNode.value);
+					
+					while (testNode.hasPrevious) {
+						
+						Move move = new Move(testNode.value.getEmptyTilePosition(),testNode.previous.value.getEmptyTilePosition());
+						correctMoves.add(move);
+						testNode = testNode.previous;
+						
+					}
+					
 					moves.clear();
-					this.setTilesForView();
+					
+					this.traceMoves(this.reverseMoves(correctMoves));
 				}
+				
+				
 			}
 		}
+	}
+	
+	private Queue<Move> reverseMoves(Queue<Move> moves){
+		Stack<Move> reverseStack = new Stack<Move>();
+		Queue<Move> reverseQueue = new LinkedList<Move>();
+		while (!moves.isEmpty()) {
+			reverseStack.add(moves.remove());
+		}
+		
+		while (!reverseStack.isEmpty()) {
+			reverseQueue.add(reverseStack.pop());
+		}
+		
+		return reverseQueue;
+		
 	}
 
 	/**
@@ -243,13 +273,13 @@ public class PuzzleViewModel {
 		private Board value;
 		private Node next;
 		private Node previous;
-		private boolean visited;
+		private boolean hasPrevious;
 
 		private Node(Board board) {
 			this.value = board;
 			this.next = null;
 			this.previous = null;
-			this.visited = false;
+			this.hasPrevious = false;
 		}
 	}
 }
