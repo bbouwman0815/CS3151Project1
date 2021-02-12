@@ -30,6 +30,22 @@ public class Move {
 		this.destination = dest;
 	}
 	
+	@Override
+	public boolean equals(Object obj) {
+		if (this.hashCode() == obj.hashCode()) {
+			return true;
+		}
+		return false;
+	}
+	@Override
+	public int hashCode() {
+		String hash = "";
+		hash += this.source.getCol() + this.source.getRow() + this.destination.getCol()
+				+ this.destination.getRow();
+		int hashCode = Integer.parseInt(hash);
+		return hashCode;
+	}
+	
 	/**
 	 * Gets the source.
 	 *

@@ -30,7 +30,7 @@ public class PuzzleViewModel {
 
 	private Board board;
 
-	private Stack<Board> undoBoardStack;
+	private Stack<Move> undoMoveStack;
 
 	/**
 	 * Instantiates a new student info view model.
@@ -40,7 +40,7 @@ public class PuzzleViewModel {
 	 */
 	public PuzzleViewModel() {
 		this.board = new Board();
-		this.undoBoardStack = new Stack<Board>();
+		this.undoMoveStack = new Stack<Move>();
 		this.board.shuffle();
 		this.tileNumberProperty = new StringProperty[Position.MAX_ROWS][Position.MAX_COLS];
 		for (Position pos : Position.values()) {
@@ -82,24 +82,13 @@ public class PuzzleViewModel {
 	 * @param pos the position of the tile to be moved
 	 */
 	public void moveTile(Position pos) {
-		if (pos == null) {
-			return;
-		}
-
 		Position destinationPos = this.board.getEmptyTilePosition();
-
-		if (this.undoBoardStack.size() == 0) {
-			this.undoBoardStack.add(new Board(this.board));
-		}
-		if (this.undoBoardStack.size() == 1) {
-			this.undoBoardStack.clear();
-			this.undoBoardStack.add(new Board(this.board));
-		}
+		
 		if (this.board.moveTile(pos, destinationPos)) {
-			Board newBoard = new Board(this.board);
-			this.undoBoardStack.add(newBoard);
+			this.undoMoveStack.push(new Move(destinationPos, pos));
+			
 			this.setTilesForView();
-
+			
 			if (this.board.isSorted()) {
 				this.solvedBoardProperty.set(true);
 			}
@@ -113,13 +102,8 @@ public class PuzzleViewModel {
 	 * @post the most recent move of a puzzle board tile is undone
 	 */
 	public void undo() {
-		System.out.println("Replace me by instructions to undo the most recent move");
-		if (this.undoBoardStack.size() == 1) {
-			return;
-		}
-		if (this.undoBoardStack.size() > 1) {
-			this.undoBoardStack.pop();
-			this.board = this.undoBoardStack.lastElement();
+		if (this.undoMoveStack.size() > 0) {
+			this.board.moveTile(this.undoMoveStack.pop());
 			this.setTilesForView();
 		}
 	}
@@ -141,72 +125,61 @@ public class PuzzleViewModel {
 
 		Queue<Move> correctMoves = new LinkedList<Move>();
 		Queue<Node> moves = new LinkedList<Node>();
-		ArrayList<Board> visitedBoards = new ArrayList<Board>();
+		ArrayList<Node> visitedBoards = new ArrayList<Node>();
 
 		Board sourceBoard = new Board(this.board);
 		Node sourceNode = new Node(sourceBoard);
-		sourceNode.previous = new Node(sourceBoard);
-		visitedBoards.add(sourceBoard);
+		visitedBoards.add(sourceNode);
 		moves.add(sourceNode);
+		
+		ArrayList<Board> sourceBoardNeighbors = new ArrayList<Board>();
+		
+		for (Board currentBoard : sourceBoardNeighbors) {
+			Node neighborNode = new Node(currentBoard);
+			neighborNode.previous = sourceNode;
+			moves.add(neighborNode);
+			visitedBoards.add(neighborNode);
+			
+		}
 
 		while (!moves.isEmpty()) {
 			Node currentNode = moves.remove();
-			Position emptyTilePosition = currentNode.value.getEmptyTilePosition();
-			// new ArrayList of neighbors - prevous board
-			ArrayList<Position> emptyTileNeighbors = (ArrayList<Position>) emptyTilePosition.getNeighbors();
-			
-			for (Position currentPosition : emptyTileNeighbors) {
-				
-				Board alteredBoard = new Board(currentNode.value);
-				alteredBoard.moveTile(currentPosition, emptyTilePosition);
-				Node neighborNode = new Node(alteredBoard);
+
+			ArrayList<Board> neighborBoards = (ArrayList<Board>) currentNode.getNodeNeighbors();
+
+			for (Board currentBoard : neighborBoards) {
+
+				Node neighborNode = new Node(currentBoard);
 				neighborNode.previous = currentNode;
 
-				// check if tiles blankspot is in the space spot as previous board. Check if
-				// correct tiles are less than
-				// previous board
-				if (!visitedBoards.contains(neighborNode.value)) {
-					visitedBoards.add(currentNode.value);
+				if (!visitedBoards.contains(neighborNode)) {
 					moves.add(neighborNode);
 					System.out.println(neighborNode.hashCode());
-				}
-
-				if (neighborNode.value.getNumberSortedTiles() == nextNumberToSolve) {
-					// use neighborNode to execute final method to return queue of moves
-					this.board = neighborNode.value;
-					
-					Node testNode = new Node(neighborNode.value);
-					
-					while (testNode.previous != null) {
-						
-						Move move = new Move(testNode.value.getEmptyTilePosition(),testNode.previous.value.getEmptyTilePosition());
-						correctMoves.add(move);
-						testNode = testNode.previous;
-						
-					}
-					
-					moves.clear();
-					
-					//this.traceMoves(this.reverseMoves(correctMoves));
 				}	
+				visitedBoards.add(currentNode);
+			}
+			
+			if (currentNode.value.getNumberSortedTiles() == nextNumberToSolve) {
+				this.board = currentNode.value;
+				this.setTilesForView();
 			}
 		}
 	}
-	
-	//Look into using a different queue so can just manipulate easier
-	private Queue<Move> reverseMoves(Queue<Move> moves){
+
+	// Look into using a different queue so can just manipulate easier
+	private Queue<Move> reverseMoves(Queue<Move> moves) {
 		Stack<Move> reverseStack = new Stack<Move>();
 		Queue<Move> reverseQueue = new LinkedList<Move>();
 		while (!moves.isEmpty()) {
 			reverseStack.add(moves.remove());
 		}
-		
+
 		while (!reverseStack.isEmpty()) {
 			reverseQueue.add(reverseStack.pop());
 		}
-		
+
 		return reverseQueue;
-		
+
 	}
 
 	/**
@@ -230,7 +203,7 @@ public class PuzzleViewModel {
 	 */
 	public void newPuzzle() {
 		this.board.shuffle();
-		this.undoBoardStack.clear();
+		this.undoMoveStack.clear();
 
 		this.setTilesForView();
 	}
@@ -277,33 +250,38 @@ public class PuzzleViewModel {
 			this.value = board;
 			this.previous = null;
 		}
-		
+
 		public Board getValue() {
 			return this.value;
 		}
-		
+
 		@Override
 		public boolean equals(Object obj) {
-			if (Node.this.value.hashCode() == ((Node) obj).getValue().hashCode()){
+			if (Node.this.value.hashCode() == ((Node) obj).getValue().hashCode()) {
 				return true;
 			}
 			return false;
 		}
 		
+		@Override
+		public int hashCode() {
+			return this.value.hashCode();
+		}
+
 		public Collection<Board> getNodeNeighbors() {
 			Collection<Position> neighbors = this.value.getEmptyTilePosition().getNeighbors();
 			ArrayList<Move> moves = new ArrayList<Move>();
 			for (Position currentPosition : neighbors) {
 				moves.add(new Move(currentPosition, this.value.getEmptyTilePosition()));
 			}
-			
+
 			Collection<Board> neighborBoards = new ArrayList<Board>();
 			for (Move currentMove : moves) {
 				Board newBoard = new Board(this.value);
 				newBoard.moveTile(currentMove);
 				neighborBoards.add(newBoard);
 			}
-			
+
 			return neighborBoards;
 		}
 	}
