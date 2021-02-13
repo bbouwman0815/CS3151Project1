@@ -6,18 +6,18 @@ import java.util.LinkedList;
 import java.util.Queue;
 import java.util.Stack;
 
-// TODO: Auto-generated Javadoc
 /**
  * The Class PuzzleSolver.
+ * @author - BrianBouwman2021
  */
 public class PuzzleSolver {
 
 	/** The board. */
 	private Board board;
-	
+
 	/** The solved board. */
 	private Board solvedBoardTemplate;
-	
+
 	/** The correct moves. */
 	private Queue<Move> correctMoves;
 
@@ -30,6 +30,10 @@ public class PuzzleSolver {
 		this.board = defaultBoard;
 		this.solvedBoardTemplate = new Board();
 		this.correctMoves = new LinkedList<Move>();
+		this.setSolvedBoardTemplate();
+	}
+	
+	private void setSolvedBoardTemplate() {
 		this.solvedBoardTemplate.setTile(new Position(0, 0), 1);
 		this.solvedBoardTemplate.setTile(new Position(0, 1), 2);
 		this.solvedBoardTemplate.setTile(new Position(0, 2), 3);
@@ -51,10 +55,38 @@ public class PuzzleSolver {
 	}
 
 	/**
-	 * Solve.
+	 * The Solve Functionality.
+	 * 
+	 * Solves the puzzle for the user
 	 */
 	public void solve() {
-		//TODO
+		Node start = new Node(this.board, null);
+		Queue<Node> nodes = new LinkedList<Node>();
+		Stack<Move> correctMoves = new Stack<Move>();
+		ArrayList<Node> usedNodes = new ArrayList<Node>();
+		nodes.add(start);
+
+		while (!nodes.isEmpty()) {
+			Node move = nodes.poll();
+			usedNodes.add(move);
+
+			for (Board current : move.getNeighbors()) {
+				Node neighborNode = new Node(current, move);
+				if (!usedNodes.contains(neighborNode)) {
+					nodes.add(neighborNode);
+				}
+			}
+
+			if (move.value.isSorted()) {
+				while (move.previous != null) {
+					correctMoves.add(new Move(move.value.getEmptyTilePosition(),
+							move.previous.getValue().getEmptyTilePosition()));
+					move = move.previous;
+				}
+				this.reverseQueue(correctMoves);
+				return;
+			}
+		}
 	}
 
 	/**
@@ -62,38 +94,43 @@ public class PuzzleSolver {
 	 * 
 	 * Helps the players by solving the next puzzle move.
 	 *
-	 * @param tileNeededToSolveFor the tile needed to solve for
+	 * @param nextTileToSolve the tile needed to solve for
 	 */
-	public void help(int tileNeededToSolveFor) {
+	public Queue<Move> help(int nextTileToSolve) {
+		Queue<Move> replayMoves = new LinkedList<Move>();
+		
 		Node start = new Node(this.board, null);
 		Queue<Node> nodes = new LinkedList<Node>();
-		Stack<Move> backwardsList = new Stack<Move>();
+		Stack<Move> correctMoves = new Stack<Move>();
 		ArrayList<Node> usedNodes = new ArrayList<Node>();
 		nodes.add(start);
 
 		while (!nodes.isEmpty()) {
 			Node move = nodes.poll();
 			usedNodes.add(move);
-			
+
 			for (Board current : move.getNeighbors()) {
-				Node tryNode = new Node(current, move);
-				if (!usedNodes.contains(tryNode)) {
-					nodes.add(tryNode);
+				Node neighborNode = new Node(current, move);
+				if (!usedNodes.contains(neighborNode)) {
+					nodes.add(neighborNode);
 				}
 			}
 
-			if (move.value.getNumberSortedTiles() >= tileNeededToSolveFor) {
+			if (move.value.getNumberSortedTiles() >= nextTileToSolve) {
 				while (move.previous != null) {
-					backwardsList.add(new Move(move.value.getEmptyTilePosition(),
+					correctMoves.add(new Move(move.value.getEmptyTilePosition(),
 							move.previous.getValue().getEmptyTilePosition()));
 					move = move.previous;
 				}
-				this.reverseQueue(backwardsList);
-				return;
+				this.reverseQueue(correctMoves);
+				replayMoves = new LinkedList<Move>(this.correctMoves);
+				return replayMoves;
 			}
 		}
+		
+		return replayMoves;
 	}
-	
+
 	/**
 	 * Reverse queue.
 	 *
@@ -112,7 +149,7 @@ public class PuzzleSolver {
 
 		/** The previous. */
 		private Node previous;
-		
+
 		/** The value. */
 		private Board value;
 
@@ -147,14 +184,14 @@ public class PuzzleSolver {
 			for (Position currentPosition : emptyTileNeighbors) {
 				moves.add(new Move(currentPosition, this.value.getEmptyTilePosition()));
 			}
-			
+
 			Collection<Board> boards = new ArrayList<Board>();
 			for (Move currentMove : moves) {
 				Board newBoard = new Board(this.value);
 				newBoard.moveTile(currentMove);
 				boards.add(newBoard);
 			}
-			
+
 			return boards;
 		}
 

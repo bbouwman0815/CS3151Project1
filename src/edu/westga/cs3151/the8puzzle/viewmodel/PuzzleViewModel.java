@@ -1,8 +1,5 @@
 package edu.westga.cs3151.the8puzzle.viewmodel;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.LinkedList;
 import java.util.Queue;
 import java.util.Stack;
 
@@ -136,7 +133,9 @@ public class PuzzleViewModel {
 	 * @post all tiles of this board are in the correct position
 	 */
 	public void solve() {
-		System.out.println("Replace me by instructions to solve the puzzle.");
+		this.puzzleSolver = new PuzzleSolver(this.board);
+		this.puzzleSolver.solve();
+		this.traceMoves(this.puzzleSolver.getCorrectMoves());
 	}
 
 	/**
@@ -158,22 +157,23 @@ public class PuzzleViewModel {
 	 * 
 	 * @param moves a sequence of valid moves
 	 */
-	private void traceMoves(Queue<Move> moves) {
-		if (moves != null && moves.size() > 0) {
-			Timeline timeline = new Timeline(new KeyFrame(Duration.seconds(0.5), evt -> {
-				Move nextMove = moves.remove();
-				this.board.moveTile(nextMove);
-				this.setTilesForView();
-			}));
-			timeline.setOnFinished(evt -> {
-				if (this.board.isSorted()) {
-					this.solvedBoardProperty.set(true);
-				}
-			});
-			timeline.setCycleCount(moves.size());
-			timeline.play();
-		}
-	}
+	 private void traceMoves(Queue<Move> moves) {
+	        if (moves != null && moves.size() > 0) {
+	            Timeline timeline = new Timeline(new KeyFrame(Duration.seconds(0.5), evt -> {
+	                Move nextMove = moves.remove();
+	                this.board.moveTile(nextMove);
+	                this.undoMoveStack.push(new Move(nextMove.getDestination(), nextMove.getSource()));
+	                this.setTilesForView();
+	            }));
+	            timeline.setOnFinished(evt -> {
+	                if (this.board.isSorted()) {
+	                    this.solvedBoardProperty.set(true);
+	                }
+	            });
+	            timeline.setCycleCount(moves.size());
+	            timeline.play();
+	        }
+	    }
 
 	/**
 	 * Needs to be called whenever the tiles of this.board have changed to display
